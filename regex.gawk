@@ -46,6 +46,12 @@ function get_character_class(text) {
  if (match(text, /between([[:digit:]]+)and([[:digit:]]+)times/, matched_digits)) {
    return "{" matched_digits[1] "," matched_digits[2] "}"
  }
+ if (match(text, /exactly([[:digit:]]+)times/, matched_digits)) {
+   return "{" matched_digits[1] "}"
+ }
+ if (match(text, /atleast([[:digit:]]+)times/, matched_digits)) {
+   return "{" matched_digits[1] ",}"
+ }
 }
 
 function capture_check(test_line,      tmp_return) {
