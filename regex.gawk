@@ -12,6 +12,8 @@ printf "%s", unformatted_return
 }
 
 function parse_handler(record,      parsed_return) {
+#this handles literal strings
+  parsed_return = parsed_return literal_check(record)
 #this handles capture groups
   parsed_return = parsed_return capture_check(record);
 #this handles getting things like \d, \w, \s
@@ -55,6 +57,22 @@ function capture_check(test_line,      tmp_return) {
      } else {
 #we hit the closing brace, nothing else to see here folks
        tmp_return = tmp_return ")"
+       break
+     }
+   }
+ }
+ return tmp_return
+}
+
+function literal_check(test_line,      tmp_return) {
+ if (match(test_line, /"/)) {
+#keep grabbing the next input
+   while (getline tmp) {
+#as long as it isn't the closing " use it and keep on keeping on
+     if (match(tmp, /[^"]/)) {
+       tmp_return = tmp_return tmp
+     } else {
+#we hit the closing ", nothing else to see here folks
        break
      }
    }
