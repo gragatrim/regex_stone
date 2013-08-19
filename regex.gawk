@@ -7,7 +7,7 @@ BEGIN { RS="[[:space:]]"}
  if (match($0, /not/)) {
    unformatted_return = unformatted_return "^"
  }
-unformatted_return = parse_handler($0);
+unformatted_return = unformatted_return parse_handler($0);
 printf "%s", unformatted_return
 }
 
