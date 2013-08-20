@@ -12,7 +12,7 @@ and it should return
 
 In the interim I'm grouping all words together as spaces are my record separator. Currently the following
 
-echo "not ( ( digits ) oneormoretimes ) lletters morethanzerotimes uletters" | ./regex.gawk
+echo "beginswith ( ( digits ) oneormoretimes ) lletters morethanzerotimes uletters" | ./regex.gawk
 
 returns
 
