@@ -1,23 +1,33 @@
 #! /bin/gawk -f
-BEGIN { RS="[[:space:]]"}
-{
+BEGIN {
+  RS="[[:space:]]"
 #let's initialize our return variable
  unformatted_return = ""
-#this needs to be first so that it nots the correct grouping
- if (match($0, /not/)) {
-   unformatted_return = unformatted_return "^"
- }
+#let's get our last "line" placeholder going
+ last_line = ""
+  }
+{
 unformatted_return = unformatted_return parse_handler($0);
-printf "%s", unformatted_return
+  last_line = $0
+}
+END {
+  printf "%s", unformatted_return
 }
 
 function parse_handler(record,      parsed_return) {
+ if (match($0, /not$/)) {
+   unformatted_return = unformatted_return "^"
+ } else if (parsed_return = parsed_return look_around_check(record, last_line)) {
+#this handles lookarounds TODO actually make it handle them correctly
+ } else if (parsed_return = parsed_return literal_check(record)) {
 #this handles literal strings
-  parsed_return = parsed_return literal_check(record)
+ } else if (parsed_return = parsed_return capture_check(record)) {
 #this handles capture groups
-  parsed_return = parsed_return capture_check(record);
+ } else if (parsed_return = parsed_return get_character_class(record)) {
 #this handles getting things like \d, \w, \s
-  parsed_return = parsed_return get_character_class(record);
+ } else {
+   parsed_return = record
+ }
   return parsed_return
 }
 
@@ -84,6 +94,25 @@ function literal_check(test_line,      tmp_return) {
 #we hit the closing ", nothing else to see here folks
        break
      }
+   }
+ }
+ return tmp_return
+}
+
+function look_around_check(test_line,last_line,     tmp_return) {
+ return ""
+ if (match(test_line, /(not)?(followedby|precededby)/, look_direction)) {
+  look_around_clause = look_direction[1] look_direction[2]
+#keep grabbing the next input
+   getline tmp
+   if (match(look_around_clause, "precededby")) {
+     tmp_return =  "(?<=" tmp ")" last_line
+   } else if (match(look_around_clause, "followedby")) {
+     tmp_return =  "(?=" tmp ")" last_line
+   } else if (match(look_around_clause, "notprecededby")) {
+     tmp_return =  "(?<!" tmp ")" last_line
+   } else if (match(look_around_clause, "notfollowedby")) {
+     tmp_return =  "(?!" tmp ")" last_line
    }
  }
  return tmp_return
