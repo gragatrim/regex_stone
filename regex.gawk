@@ -15,9 +15,7 @@ END {
 }
 
 function parse_handler(record,      parsed_return) {
- if (match($0, /not$/)) {
-   parsed_return = parsed_return "^"
- } else if (parsed_return = parsed_return look_around_check(record, last_line)) {
+ if (parsed_return = parsed_return look_around_check(record, last_line)) {
 #this handles lookarounds TODO actually make it handle them correctly
  } else if (parsed_return = parsed_return literal_check(record)) {
 #this handles literal strings
@@ -32,6 +30,13 @@ function parse_handler(record,      parsed_return) {
 }
 
 function get_character_class(text) {
+ if (match(text, /beginswith|startswith/)) {
+   return "^"
+ }
+ if (match(text, "endswith")) {
+    getline tmp
+    return parse_handler(tmp) "$"
+ }
  if (match(text, /digits?/)) {
    return  "\\d"
  }
