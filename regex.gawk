@@ -16,7 +16,7 @@ END {
 
 function parse_handler(record,      parsed_return) {
  if (match($0, /not$/)) {
-   unformatted_return = unformatted_return "^"
+   parsed_return = parsed_return "^"
  } else if (parsed_return = parsed_return look_around_check(record, last_line)) {
 #this handles lookarounds TODO actually make it handle them correctly
  } else if (parsed_return = parsed_return literal_check(record)) {
