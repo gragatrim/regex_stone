@@ -17,6 +17,8 @@ END {
 function parse_handler(record,      parsed_return) {
  if (parsed_return = parsed_return look_around_check(record, last_line)) {
 #this handles lookarounds TODO actually make it handle them correctly
+ } else if (parsed_return = parsed_return not_check(record)) {
+#this handles literal strings
  } else if (parsed_return = parsed_return literal_check(record)) {
 #this handles literal strings
  } else if (parsed_return = parsed_return capture_check(record)) {
@@ -121,4 +123,13 @@ function look_around_check(test_line,last_line,     tmp_return) {
    }
  }
  return tmp_return
+}
+
+function not_check(test_line,     tmp_return) {
+  if (match(test_line, /^not$/)) {
+#since we are notting we'll need a character class
+    getline tmp
+    tmp_return = "[^" parse_handler(tmp) "]"
+  }
+  return tmp_return
 }

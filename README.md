@@ -12,8 +12,8 @@ and it should return
 
 In the interim I'm grouping all words together as spaces are my record separator. Currently the following
 
-echo "beginswith ( ( digits ) oneormoretimes ) lletters morethanzerotimes uletters" | ./regex.gawk
+beginswith ( digits exactly2times ) not space ( digits exactly2times ) not space endswith ( digits exactly4times )
 
 returns
 
-^((\d)+)[a-z]*[A-Z]
+^(\d{2})[^\s](\d{2})[^\s](\d{4})$
