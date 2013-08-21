@@ -80,13 +80,13 @@ function capture_check(test_line,      tmp_return) {
    tmp_return = tmp_return test_line
 #keep grabbing the next input
    while (getline tmp) {
-#as long as it isn't a closing paren parse it and keep on keepin on
-     if (match(tmp, /[^)]/)) {
-       tmp_return = tmp_return parse_handler(tmp)
-     } else {
+     if (match(tmp, /^\)$/)) {
 #we hit the closing brace, nothing else to see here folks
        tmp_return = tmp_return ")"
        break
+     } else {
+#as long as it isn't a closing paren parse it and keep on keepin on
+       tmp_return = tmp_return parse_handler(tmp)
      }
    }
  }
