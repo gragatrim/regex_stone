@@ -32,47 +32,50 @@ function parse_handler(record,      parsed_return) {
 }
 
 function get_character_class(text) {
- if (match(text, /beginswith|startswith/)) {
+ if (match(text, /^beginswith$|^startswith$/)) {
    return "^"
  }
- if (match(text, "endswith")) {
+ if (match(text, /^endswith$/)) {
     getline tmp
     return parse_handler(tmp) "$"
  }
- if (match(text, /digits?/)) {
+ if (match(text, /^digits?$/)) {
    return  "\\d"
  }
- if (match(text, /characters?/)) {
+ if (match(text, /^characters?$/)) {
    return  "\\w"
  }
- if (match(text, /spaces?/)) {
+ if (match(text, /^spaces?$/)) {
    return  "\\s"
  }
- if (match(text, /lletters?/)) {
+ if (match(text, /^lletters?$/)) {
    return  "[a-z]"
  }
- if (match(text, /uletters?/)) {
+ if (match(text, /^uletters?$/)) {
    return  "[A-Z]"
  }
- if (match(text, /oneormoretimes/)) {
+ if (match(text, /^oneormoretimes$/)) {
    return  "+"
  }
- if (match(text, /morethanzerotimes/)) {
+ if (match(text, /^morethanzerotimes$/)) {
    return  "*"
  }
- if (match(text, /between([[:digit:]]+)and([[:digit:]]+)times/, matched_digits)) {
+ if (match(text, /^between([[:digit:]]+)and([[:digit:]]+)times$/, matched_digits)) {
    return "{" matched_digits[1] "," matched_digits[2] "}"
  }
- if (match(text, /exactly([[:digit:]]+)times/, matched_digits)) {
+ if (match(text, /^exactly([[:digit:]]+)times$/, matched_digits)) {
    return "{" matched_digits[1] "}"
  }
- if (match(text, /atleast([[:digit:]]+)times/, matched_digits)) {
+ if (match(text, /^atleast([[:digit:]]+)times$/, matched_digits)) {
    return "{" matched_digits[1] ",}"
+ }
+ if (match(text, /^optional(ly)?$/)) {
+   return "?"
  }
 }
 
 function capture_check(test_line,      tmp_return) {
- if (match(test_line, /\(/)) {
+ if (match(test_line, /^\($/)) {
 #let's print out that opening brace
    tmp_return = tmp_return test_line
 #keep grabbing the next input
