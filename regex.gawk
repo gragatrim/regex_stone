@@ -24,6 +24,8 @@ function language_parser(current_word, current_field_index,     parsed_value) {
     parsed_value = language_parser($(current_field_index + 2), (current_field_index + 2)) "$"
   } else if (match(current_word, /^\($/)) {
     parsed_value = capture_check(current_word, current_field_index)
+  } else if (match(current_word, /^not$/)) {
+    parsed_value = not_check(current_word, current_field_index)
   } else {
     parsed_value = get_character_class(current_word)
   }
@@ -117,12 +119,8 @@ function look_around_check(current_record,current_field_index,     tmp_return) {
  return tmp_return
 }
 
-#TODO convert this
-function not_check(test_line,     tmp_return) {
-  if (match(test_line, /^not$/)) {
+function not_check(current_value,current_field_index,     tmp_return) {
 #since we are notting we'll need a character class
-    getline tmp
-    tmp_return = "[^" language_parser(tmp) "]"
-  }
+  tmp_return = "[^" language_parser($(current_field_index + 1), (current_field_index + 1 )) "]"
   return tmp_return
 }
