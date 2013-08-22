@@ -1,44 +1,9 @@
 #! /bin/gawk -f
-BEGIN {
-  RS="[[:space:]]"
-#let's initialize our return variable
- unformatted_return = ""
-#let's get our last "line" placeholder going
- last_line = ""
-  }
 {
-unformatted_return = unformatted_return parse_handler($0);
-  last_line = $0
-}
-END {
-  printf "%s", unformatted_return
-}
-
-function parse_handler(record,      parsed_return) {
- if (parsed_return = parsed_return look_around_check(record, last_line)) {
-#this handles lookarounds TODO actually make it handle them correctly
- } else if (parsed_return = parsed_return not_check(record)) {
-#this handles literal strings
- } else if (parsed_return = parsed_return literal_check(record)) {
-#this handles literal strings
- } else if (parsed_return = parsed_return capture_check(record)) {
-#this handles capture groups
- } else if (parsed_return = parsed_return get_character_class(record)) {
-#this handles getting things like \d, \w, \s
- } else {
-   parsed_return = record
- }
-  return parsed_return
+  print language_parser_handler($0)
 }
 
 function get_character_class(text) {
- if (match(text, /^beginswith$|^startswith$/)) {
-   return "^"
- }
- if (match(text, /^endswith$/)) {
-    getline tmp
-    return parse_handler(tmp) "$"
- }
  if (match(text, /^digits?$/)) {
    return  "\\d"
  }
@@ -71,26 +36,20 @@ function get_character_class(text) {
  }
  if (match(text, /^optional(ly)?$/)) {
    return "?"
+ } else {
+   return text
  }
 }
 
-function capture_check(test_line,      tmp_return) {
- if (match(test_line, /^\($/)) {
-#let's print out that opening brace
-   tmp_return = tmp_return test_line
-#keep grabbing the next input
-   while (getline tmp) {
-     if (match(tmp, /^\)$/)) {
-#we hit the closing brace, nothing else to see here folks
-       tmp_return = tmp_return ")"
-       break
-     } else {
+function capture_check(current_value,current_field_index,      tmp_return) {
+#let's save that opening brace
+  tmp_return = current_value
+#keep grabbing the next input, starting at index + 1 so that I don't have to pass the "next" value to the language parser and instead pass in the "current"
+  for (j = current_field_index + 1; !match($j, /^\)$/); j++) {
 #as long as it isn't a closing paren parse it and keep on keepin on
-       tmp_return = tmp_return parse_handler(tmp)
-     }
+     tmp_return = tmp_return language_parser($(j), j)
    }
- }
- return tmp_return
+  return tmp_return language_parser($(j), (j))
 }
 
 function literal_check(test_line,      tmp_return) {
@@ -109,22 +68,18 @@ function literal_check(test_line,      tmp_return) {
  return tmp_return
 }
 
-function look_around_check(test_line,last_line,     tmp_return) {
- return ""
- if (match(test_line, /(not)?(followedby|precededby)/, look_direction)) {
-  look_around_clause = look_direction[1] look_direction[2]
-#keep grabbing the next input
-   getline tmp
+function look_around_check(current_record,current_field_index,     tmp_return) {
+  look_around_clause = current_record $(current_field_index + 1)
+   tmp = language_parser($(current_field_index + 2), (current_field_index + 2))
    if (match(look_around_clause, "precededby")) {
-     tmp_return =  "(?<=" tmp ")" last_line
+     tmp_return =  "(?<=" tmp ")"
    } else if (match(look_around_clause, "followedby")) {
-     tmp_return =  "(?=" tmp ")" last_line
+     tmp_return =  "(?=" tmp ")"
    } else if (match(look_around_clause, "notprecededby")) {
-     tmp_return =  "(?<!" tmp ")" last_line
+     tmp_return =  "(?<!" tmp ")"
    } else if (match(look_around_clause, "notfollowedby")) {
-     tmp_return =  "(?!" tmp ")" last_line
+     tmp_return =  "(?!" tmp ")"
    }
- }
  return tmp_return
 }
 
@@ -132,7 +87,41 @@ function not_check(test_line,     tmp_return) {
   if (match(test_line, /^not$/)) {
 #since we are notting we'll need a character class
     getline tmp
-    tmp_return = "[^" parse_handler(tmp) "]"
+    tmp_return = "[^" language_parser(tmp) "]"
   }
   return tmp_return
+}
+
+function language_parser_handler(current_line,    output) {
+  for (i=1; i <= NF; i++) {
+    output = output language_parser($i, i)
+  }
+  return output
+}
+
+function language_parser(current_word, current_field_index,     parsed_value) {
+  if (match(current_word, /^followed$/)) {
+    switch ($(current_field_index + 1)) {
+      case "by":
+        parsed_value = look_around_check(current_word, current_field_index)
+        break
+    }
+  } else if (match(current_word $(current_field_index + 1) , /^endswith$/)) {
+    parsed_value = language_parser($(current_field_index + 2), (current_field_index + 2)) "$"
+  } else if (match(current_word, /^\($/)) {
+    parsed_value = capture_check(current_word, current_field_index)
+  } else {
+    parsed_value = get_character_class(current_word)
+  }
+  if (i < current_field_index) {
+    i = current_field_index
+  }
+  return parsed_value
+}
+
+function print_space(k) {
+  while(k) {
+    printf(" ")
+    k--
+  }
 }
