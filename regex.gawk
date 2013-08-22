@@ -17,8 +17,11 @@ function language_parser_handler(current_line,    output) {
 #Current this function is going to be a bit messy and be a bunch of if/elseifs until I can think of a better way to handle parsing english
 #it may end up staying this way, but get a bit of sprucing by using fancier regex to keep some of the nested if/switches to a minimum
 function language_parser(current_word, current_field_index,     parsed_value) {
+#THIS SHOULD ALWAYS BE FIRST!!!! no need to parse anything if the word is useless
   if (match(current_word, useless_words)) {
     parsed_value = ""
+  } else if (match(current_word, /"/)) {
+    parsed_value = literal_check(current_field_index)
   } else if (match(current_word, /^followed$/)) {
     switch ($(current_field_index + 1)) {
       case "by":
@@ -91,20 +94,16 @@ function capture_check(current_value,current_field_index,      tmp_return) {
   return tmp_return language_parser($(j), (j))
 }
 
-#TODO convert this
-function literal_check(test_line,      tmp_return) {
- if (match(test_line, /"/)) {
-#keep grabbing the next input
-   while (getline tmp) {
+function literal_check(current_field_index,      tmp_return) {
+#keep grabbing the next input, starting at index + 1 so that I don't have to pass the "next" value to the language parser and instead pass in the "current"
+  for (j = current_field_index + 1; !match($j, /^\"$/); j++) {
 #as long as it isn't the closing " use it and keep on keeping on
-     if (match(tmp, /[^"]/)) {
-       tmp_return = tmp_return tmp
-     } else {
-#we hit the closing ", nothing else to see here folks
-       break
-     }
+     tmp_return = tmp_return " " $j
+#SUPER FUCKING HACKY!!! Not sure how to handle this otherwise though.... TODO Make this suck less
+     language_parser("any", j)
    }
- }
+#and the hacks just keep on coming.... I really need to figure out a better way to do literal strings.... TODO Make this suck less
+     language_parser("any", j)
  return tmp_return
 }
 
