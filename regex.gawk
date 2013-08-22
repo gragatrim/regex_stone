@@ -1,4 +1,7 @@
 #! /bin/gawk -f
+BEGIN {
+  useless_words = "/a|the|any|all/";
+}
 {
   print language_parser_handler($0)
 }
@@ -14,7 +17,9 @@ function language_parser_handler(current_line,    output) {
 #Current this function is going to be a bit messy and be a bunch of if/elseifs until I can think of a better way to handle parsing english
 #it may end up staying this way, but get a bit of sprucing by using fancier regex to keep some of the nested if/switches to a minimum
 function language_parser(current_word, current_field_index,     parsed_value) {
-  if (match(current_word, /^followed$/)) {
+  if (match(current_word, useless_words)) {
+    parsed_value = ""
+  } else if (match(current_word, /^followed$/)) {
     switch ($(current_field_index + 1)) {
       case "by":
         parsed_value = look_around_check(current_word, current_field_index)
