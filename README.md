@@ -10,17 +10,9 @@ and it should return
 
 \d[a-z]+
 
-In the interim I'm grouping all words together as spaces are my record separator. Currently the following
-
-beginswith ( digits exactly2times ) not space ( digits exactly2times ) not space endswith ( digits exactly4times )
-
-returns
-
-^(\d{2})[^\s](\d{2})[^\s](\d{4})$
-
 This script is run from the command line using gawk. You can run it by echoing out a string and piping it to this like so
 
-echo "digits exactly8times" | regex.gawk
+echo "ends with ( spaces ( digits ) ) characters spaces" | regex.gawk
 
 Or you can cat a file like so
 
