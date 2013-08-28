@@ -39,6 +39,12 @@ function language_parser(current_word, current_field_index,     parsed_value) {
     } else {
 #we don't need to do anything here as the check for followed/preceded should handle this
     }
+  } else if (match(current_word, /^one$/) &&
+             match($(current_field_index + 1), /^or$/) &&
+             match($(current_field_index + 2), /^more$/) &&
+             match($(current_field_index + 3), /^times$/)) {
+     parsed_value =  "+"
+     i = i + 3
   } else {
     parsed_value = get_character_class(current_word)
   }
@@ -63,9 +69,6 @@ function get_character_class(text) {
  }
  if (match(text, /^uletters?$/)) {
    return  "[A-Z]"
- }
- if (match(text, /^oneormoretimes$/)) {
-   return  "+"
  }
  if (match(text, /^morethanzerotimes$/)) {
    return  "*"
@@ -117,6 +120,7 @@ function look_around_check(current_record,current_field_index,     tmp_return) {
   look_around_clause_two = current_record $(current_field_index + 1)
   look_around_clause_three = $(current_field_index - 1) current_record $(current_field_index + 1)
    tmp = language_parser($(current_field_index + 2), (current_field_index + 2))
+#The three value should go first as the two will always catch in these cases, and we actually want to give the not a chance
    if (match(look_around_clause_three, "notprecededby")) {
      tmp_return =  "(?<!" tmp ")"
    } else if (match(look_around_clause_three, "notfollowedby")) {
