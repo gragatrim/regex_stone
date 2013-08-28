@@ -44,7 +44,13 @@ function language_parser(current_word, current_field_index,     parsed_value) {
              match($(current_field_index + 2), /^more$/) &&
              match($(current_field_index + 3), /^times$/)) {
      parsed_value =  "+"
-     i = i + 3
+     i = current_field_index + 3
+  } else if (match(current_word, /^uppercase$/) && match($(current_field_index + 1), /^letters?$/)) {
+    parsed_value = get_character_class("uletter")
+    i = current_field_index + 1
+  } else if (match(current_word, /^lowercase$/) && match($(current_field_index + 1), /^letters?$/)) {
+    parsed_value = get_character_class("lletter")
+    i = current_field_index + 1
   } else {
     parsed_value = get_character_class(current_word)
   }
@@ -97,6 +103,10 @@ function capture_check(current_value,current_field_index,      tmp_return) {
   for (j = current_field_index + 1; !match($j, /^\)$/); j++) {
 #as long as it isn't a closing paren parse it and keep on keepin on
      tmp_return = tmp_return language_parser($(j), j)
+#This fixes multi word identifiers used inside of a capture group
+     if (i > j) {
+       j = i
+     }
    }
 #we have the final language_parser here since we still need to parse the closing paren
   return tmp_return language_parser($(j), (j))
