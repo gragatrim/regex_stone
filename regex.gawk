@@ -1,6 +1,6 @@
 #! /bin/gawk -f
 BEGIN {
-  useless_words = "/a|the|any|all/";
+  useless_words = "/a|the|any|all|with|/";
 }
 {
   print language_parser_handler($0)
@@ -19,10 +19,11 @@ function language_parser_handler(current_line,    output) {
 function language_parser(current_word, current_field_index,     parsed_value) {
 #THIS SHOULD ALWAYS BE FIRST!!!! no need to parse anything if the word is useless
   if (match(current_word, useless_words)) {
-    parsed_value = ""
+#This is done so that things like ends with will still work and get the expected regex instead of just getting nothing
+    parsed_value = language_parser($(current_field_index + 1), (current_field_index + 1))
   } else if (match(current_word, /"/)) {
     parsed_value = literal_check(current_field_index)
-  } else if (match(current_word, /^followed$/)) {
+  } else if (match(current_word, /^followed$/) || match(current_word, /^preceded$/)) {
     switch ($(current_field_index + 1)) {
       case "by":
         parsed_value = look_around_check(current_word, current_field_index)
@@ -33,7 +34,11 @@ function language_parser(current_word, current_field_index,     parsed_value) {
   } else if (match(current_word, /^\($/)) {
     parsed_value = capture_check(current_word, current_field_index)
   } else if (match(current_word, /^not$/)) {
+    if (!(match($(current_field_index + 1), /^followed$/) || match($(current_field_index + 1), /^preceded$/))) {
     parsed_value = not_check(current_word, current_field_index)
+    } else {
+#we don't need to do anything here as the check for followed/preceded should handle this
+    }
   } else {
     parsed_value = get_character_class(current_word)
   }
@@ -100,25 +105,26 @@ function literal_check(current_field_index,      tmp_return) {
 #as long as it isn't the closing " use it and keep on keeping on
      tmp_return = tmp_return " " $j
 #SUPER FUCKING HACKY!!! Not sure how to handle this otherwise though.... TODO Make this suck less
-     language_parser("any", j)
+     language_parser("", j)
    }
 #and the hacks just keep on coming.... I really need to figure out a better way to do literal strings.... TODO Make this suck less
-     language_parser("any", j)
+     language_parser("", j)
  return tmp_return
 }
 
 function look_around_check(current_record,current_field_index,     tmp_return) {
 #this is sort of dirty.... TODO maybe come up with a better way of handling it
-  look_around_clause = current_record $(current_field_index + 1)
+  look_around_clause_two = current_record $(current_field_index + 1)
+  look_around_clause_three = $(current_field_index - 1) current_record $(current_field_index + 1)
    tmp = language_parser($(current_field_index + 2), (current_field_index + 2))
-   if (match(look_around_clause, "precededby")) {
-     tmp_return =  "(?<=" tmp ")"
-   } else if (match(look_around_clause, "followedby")) {
-     tmp_return =  "(?=" tmp ")"
-   } else if (match(look_around_clause, "notprecededby")) {
+   if (match(look_around_clause_three, "notprecededby")) {
      tmp_return =  "(?<!" tmp ")"
-   } else if (match(look_around_clause, "notfollowedby")) {
+   } else if (match(look_around_clause_three, "notfollowedby")) {
      tmp_return =  "(?!" tmp ")"
+   } else if (match(look_around_clause_two, "precededby")) {
+     tmp_return =  "(?<=" tmp ")"
+   } else if (match(look_around_clause_two, "followedby")) {
+     tmp_return =  "(?=" tmp ")"
    }
  return tmp_return
 }
