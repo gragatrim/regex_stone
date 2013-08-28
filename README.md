@@ -31,3 +31,5 @@ ends with any digit one or more times followed by ( characters ) " testing one e
 produces the following output
 
 \d$+(?=(\w)) testing one ends with[^\d](?=\w)
+
+Make sure to check the raw output as github does some fancy things and can turn the above regex into a link
