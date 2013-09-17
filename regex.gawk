@@ -58,6 +58,13 @@ function language_parser(current_word, current_field_index,     parsed_value) {
              match($(current_field_index + 4), /^times$/)) {
     parsed_value = "{" beginning_digit[0] "," ending_digit[0] "}"
     i = current_field_index + 4
+  } else if (match(current_word, /^exactly$/) &&
+             match($(current_field_index + 1), /^[[:digit:]]+$/, matched_digits) &&
+             match($(current_field_index + 2), /^times$/)) {
+   parsed_value = "{" matched_digits[0] "}"
+   i = current_field_index + 2
+  } else  if (match(text, /^atleast([[:digit:]]+)times$/, matched_digits)) {
+   parsed_value = "{" matched_digits[1] ",}"
   } else if (match(current_word, /^uppercase$/) && match($(current_field_index + 1), /^letters?$/)) {
     parsed_value = get_character_class("uletter")
     i = current_field_index + 1
@@ -88,12 +95,6 @@ function get_character_class(text) {
  }
  if (match(text, /^uletters?$/)) {
    return  "[A-Z]"
- }
- if (match(text, /^exactly([[:digit:]]+)times$/, matched_digits)) {
-   return "{" matched_digits[1] "}"
- }
- if (match(text, /^atleast([[:digit:]]+)times$/, matched_digits)) {
-   return "{" matched_digits[1] ",}"
  }
  if (match(text, /^optional(ly)?$/)) {
    return "?"
