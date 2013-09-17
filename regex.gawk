@@ -45,6 +45,12 @@ function language_parser(current_word, current_field_index,     parsed_value) {
              match($(current_field_index + 3), /^times$/)) {
      parsed_value =  "+"
      i = current_field_index + 3
+  } else if (match(current_word, /^more$/) &&
+             match($(current_field_index + 1), /^than$/) &&
+             match($(current_field_index + 2), /^zero$/) &&
+             match($(current_field_index + 3), /^times$/)) {
+     parsed_value =  "*"
+     i = current_field_index + 3
   } else if (match(current_word, /^uppercase$/) && match($(current_field_index + 1), /^letters?$/)) {
     parsed_value = get_character_class("uletter")
     i = current_field_index + 1
@@ -75,9 +81,6 @@ function get_character_class(text) {
  }
  if (match(text, /^uletters?$/)) {
    return  "[A-Z]"
- }
- if (match(text, /^morethanzerotimes$/)) {
-   return  "*"
  }
  if (match(text, /^between([[:digit:]]+)and([[:digit:]]+)times$/, matched_digits)) {
    return "{" matched_digits[1] "," matched_digits[2] "}"
