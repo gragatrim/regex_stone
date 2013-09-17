@@ -43,14 +43,14 @@ function language_parser(current_word, current_field_index,     parsed_value) {
              match($(current_field_index + 1), /^or$/) &&
              match($(current_field_index + 2), /^more$/) &&
              match($(current_field_index + 3), /^times$/)) {
-     parsed_value =  "+"
-     i = current_field_index + 3
+    parsed_value =  "+"
+    i = current_field_index + 3
   } else if (match(current_word, /^more$/) &&
              match($(current_field_index + 1), /^than$/) &&
              match($(current_field_index + 2), /^zero$/) &&
              match($(current_field_index + 3), /^times$/)) {
-     parsed_value =  "*"
-     i = current_field_index + 3
+    parsed_value =  "*"
+    i = current_field_index + 3
   } else if (match(current_word, /^between$/) &&
              match($(current_field_index + 1), /^[[:digit:]]+$/, beginning_digit) &&
              match($(current_field_index + 2), /^and$/) &&
@@ -61,13 +61,13 @@ function language_parser(current_word, current_field_index,     parsed_value) {
   } else if (match(current_word, /^exactly$/) &&
              match($(current_field_index + 1), /^[[:digit:]]+$/, matched_digits) &&
              match($(current_field_index + 2), /^times$/)) {
-   parsed_value = "{" matched_digits[0] "}"
-   i = current_field_index + 2
+    parsed_value = "{" matched_digits[0] "}"
+    i = current_field_index + 2
   } else  if (match(current_word, /^atleast$/) &&
               match($(current_field_index + 1), /^[[:digit:]]+$/, matched_digits) &&
               match($(current_field_index + 2), /^times$/)) {
-   parsed_value = "{" matched_digits[0] ",}"
-   i = current_field_index + 2
+    parsed_value = "{" matched_digits[0] ",}"
+    i = current_field_index + 2
   } else if (match(current_word, /^uppercase$/) && match($(current_field_index + 1), /^letters?$/)) {
     parsed_value = get_character_class("uletter")
     i = current_field_index + 1
