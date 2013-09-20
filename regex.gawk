@@ -1,6 +1,6 @@
 #! /bin/gawk -f
 BEGIN {
-  useless_words = "/a|the|any|all|with|/";
+  useless_words = "a|the|any|all|with";
 }
 {
   print language_parser_handler($0)
@@ -35,7 +35,7 @@ function language_parser(current_word, current_field_index,     parsed_value) {
     parsed_value = capture_check(current_word, current_field_index)
   } else if (match(current_word, /^not$/)) {
     if (!(match($(current_field_index + 1), /^followed$/) || match($(current_field_index + 1), /^preceded$/))) {
-    parsed_value = not_check(current_word, current_field_index)
+    parsed_value = not_check(current_field_index)
     } else {
 #we don't need to do anything here as the check for followed/preceded should handle this
     }
@@ -84,27 +84,27 @@ function language_parser(current_word, current_field_index,     parsed_value) {
 }
 
 function get_character_class(text) {
- if (match(text, /^digits?$/)) {
-   return  "\\d"
- }
- if (match(text, /^characters?$/)) {
-   return  "\\w"
- }
- if (match(text, /^spaces?$/)) {
-   return  "\\s"
- }
- if (match(text, /^lletters?$/)) {
-   return  "[a-z]"
- }
- if (match(text, /^uletters?$/)) {
-   return  "[A-Z]"
- }
- if (match(text, /^optional(ly)?$/)) {
-   return "?"
- } else {
+  if (match(text, /^digits?$/)) {
+    return  "\\d"
+  }
+  if (match(text, /^characters?$/)) {
+    return  "\\w"
+  }
+  if (match(text, /^spaces?$/)) {
+    return  "\\s"
+  }
+  if (match(text, /^lletters?$/)) {
+    return  "[a-z]"
+  }
+  if (match(text, /^uletters?$/)) {
+    return  "[A-Z]"
+  }
+  if (match(text, /^optional(ly)?$/)) {
+    return "?"
+  } else {
 #this is super dirty, TODO clean it up
-   return text
- }
+    return text
+  }
 }
 
 function capture_check(current_value,current_field_index,      tmp_return) {
@@ -154,7 +154,7 @@ function look_around_check(current_record,current_field_index,     tmp_return) {
  return tmp_return
 }
 
-function not_check(current_value,current_field_index,     tmp_return) {
+function not_check(current_field_index,     tmp_return) {
 #since we are notting we'll need a character class
   tmp_return = "[^" language_parser($(current_field_index + 1), (current_field_index + 1 )) "]"
   return tmp_return
