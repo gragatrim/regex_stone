@@ -30,7 +30,15 @@ function language_parser(current_word, current_field_index,     parsed_value) {
         break
     }
   } else if (match(current_word $(current_field_index + 1) , /^endswith$/)) {
-    parsed_value = language_parser($(current_field_index + 2), (current_field_index + 2)) "$"
+#We'll always want to parse the value below, the only thing that will change is when/where the $ goes
+      parsed_value = language_parser($(current_field_index + 2), (current_field_index + 2))
+#We need to use i here instead of current_field_index due to how the current_field_index changes after the last parsing
+    if (quantifier_check(i + 1)) {
+#There is a quantifier after, we need to parse that before tossing in the $
+      parsed_value = parsed_value language_parser($(i + 1), i + 1)  "$"
+    } else {
+      parsed_value = parsed_value "$"
+    }
   } else if (match(current_word, /^\($/)) {
     parsed_value = capture_check(current_word, current_field_index)
   } else if (match(current_word, /^not$/)) {
@@ -166,5 +174,38 @@ function look_around_check(current_record,current_field_index,     tmp_return) {
 function not_check(current_field_index,     tmp_return) {
 #since we are notting we'll need a character class
   tmp_return = "[^" language_parser($(current_field_index + 1), (current_field_index + 1 )) "]"
+  return tmp_return
+}
+
+function quantifier_check(current_field_index,     tmp_return) {
+#Here we'll use a bunch of duplicate code to check if a modifier comes next for use with things like "ends with"
+  tmp_return = 0
+  if (match($(current_field_index), useless_words)) {
+    tmp_return = quantifier_check(current_field_index + 1)
+  } else if (match($(current_field_index), /^one$/) &&
+             match($(current_field_index + 1), /^or$/) &&
+             match($(current_field_index + 2), /^more$/) &&
+             match($(current_field_index + 3), /^times$/)) {
+      tmp_return = 1
+  } else if (match($(current_field_index), /^more$/) &&
+             match($(current_field_index + 1), /^than$/) &&
+             match($(current_field_index + 2), /^zero$/) &&
+             match($(current_field_index + 3), /^times$/)) {
+      tmp_return = 1
+  } else if (match($(current_field_index), /^between$/) &&
+             match($(current_field_index + 1), /^[[:digit:]]+$/, beginning_digit) &&
+             match($(current_field_index + 2), /^and$/) &&
+             match($(current_field_index + 3), /^[[:digit:]]+$/, ending_digit) &&
+             match($(current_field_index + 4), /^times$/)) {
+      tmp_return = 1
+  } else if (match($(current_field_index), /^exactly$/) &&
+             match($(current_field_index + 1), /^[[:digit:]]+$/, matched_digits) &&
+             match($(current_field_index + 2), /^times$/)) {
+      tmp_return = 1
+  } else  if (match($(current_field_index), /^atleast$/) &&
+              match($(current_field_index + 1), /^[[:digit:]]+$/, matched_digits) &&
+              match($(current_field_index + 2), /^times$/)) {
+      tmp_return = 1
+  }
   return tmp_return
 }
