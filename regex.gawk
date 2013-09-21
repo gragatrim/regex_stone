@@ -1,6 +1,6 @@
 #! /bin/gawk -f
 BEGIN {
-  useless_words = "a|the|any|all|with";
+  useless_words = "^(a|the|any|all|with)$";
 }
 {
   print language_parser_handler($0)
@@ -21,7 +21,7 @@ function language_parser(current_word, current_field_index,     parsed_value) {
   if (match(current_word, useless_words)) {
 #This is done so that things like ends with will still work and get the expected regex instead of just getting nothing
     parsed_value = language_parser($(current_field_index + 1), (current_field_index + 1))
-  } else if (match(current_word, /"/)) {
+  } else if (match(current_word, /^"/)) {
     parsed_value = literal_check(current_field_index)
   } else if (match(current_word, /^followed$/) || match(current_word, /^preceded$/)) {
     switch ($(current_field_index + 1)) {
@@ -124,16 +124,25 @@ function capture_check(current_value,current_field_index,      tmp_return) {
 }
 
 function literal_check(current_field_index,      tmp_return) {
-#keep grabbing the next input, starting at index + 1 so that I don't have to pass the "next" value to the language parser and instead pass in the "current"
-  for (j = current_field_index + 1; !match($j, /^\"$/); j++) {
+#This checks if we are doing a single value in the literal
+  if (match($(current_field_index), /\"$/)) {
+    tmp_return = tmp_return substr($(current_field_index), 2, length($(current_field_index)) - 2)
+  } else {
+#if we aren't then we need to continue to print out the rest of the string until we hit the next "(which is hopefully the closing quote)
+    tmp_return = tmp_return substr($(current_field_index), 2)
+#start at the next field index since we already added in the first one
+    for (j = current_field_index + 1; !match($j, /\"$/); j++) {
 #as long as it isn't the closing " use it and keep on keeping on
-     tmp_return = tmp_return " " $j
+      tmp_return = tmp_return " " $j
 #SUPER FUCKING HACKY!!! Not sure how to handle this otherwise though.... TODO Make this suck less
-     language_parser("", j)
-   }
+      language_parser("", j)
+    }
+#we hit the end of the road, time to print out the final set of characters, minus the closing quote
+    tmp_return = tmp_return " " substr($j, 1, length($j) - 1)
+  }
 #and the hacks just keep on coming.... I really need to figure out a better way to do literal strings.... TODO Make this suck less
-     language_parser("", j)
- return tmp_return
+  language_parser("", j)
+  return tmp_return
 }
 
 function look_around_check(current_record,current_field_index,     tmp_return) {
