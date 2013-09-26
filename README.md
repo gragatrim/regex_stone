@@ -20,16 +20,16 @@ cat testfile | regex.gawk
 
 If there are other ways for you to generate text that can be piped to this script it should work and return the correct regex
 
- as of commit 
+ as of commit
 
-3ac29285152784262504e3897371373a8e82d112
+e8da476db7e62b0b3c25c6561fc11f4917bd454a
 
-The following sentence 
+The following sentence
 
-ends with any digit one or more times followed by ( characters ) " testing one ends with " not digits followed by characters 
+ends with any digit atleast 1 times followed by ( uppercase letters one or more times ( followed by spaces more than zero times ) ) "testing one ends with" not digits followed by characters
 
 produces the following output
 
-\d$+(?=(\w)) testing one ends with[^\d](?=\w)
+\d{1,}$(?=([A-Z]+((?=\s)*)))testing one ends with[^\d](?=\w)
 
-Make sure to check the raw output as github does some fancy things and can turn the above regex into a link
+Make sure to check the raw output as github does some fancy things and can turn the above regex into a link.
