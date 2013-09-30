@@ -2,10 +2,16 @@
 BEGIN {
   useless_words = "^(a|the|any|all|with)$";
 }
-{
-  print language_parser_handler($0)
+/^[^#]/{
+  print $0 " -> " language_parser_handler($0)
 }
 
+# This function just calls the language parser function for us
+#
+# @args global current_line This is the the entire line i.e. $0
+# @args local  output       This is the parsed output that will be returned to the console
+#
+# @return This returns the parsed output for the line so it can be output to the console
 function language_parser_handler(current_line,    output) {
   #lets loop through each field and parse the important bits out
   for (i=1; i <= NF; i++) {
@@ -14,9 +20,16 @@ function language_parser_handler(current_line,    output) {
   return output
 }
 
-#Current this function is going to be a bit messy and be a bunch of if/elseifs until I can think of a better way to handle parsing english
-#it may end up staying this way, but get a bit of sprucing by using fancier regex to keep some of the nested if/switches to a minimum
-function language_parser(current_word, current_field_index,     parsed_value) {
+# Current this function is going to be a bit messy and be a bunch of if/elseifs until I can think of a better way to handle parsing english
+# it may end up staying this way, but get a bit of sprucing by using fancier regex to keep some of the nested if/switches to a minimum
+# Basically it is doing all of the heavy lifting and determinig what should be parsed by what function
+#
+# @arg global current_word        This is the current field we are working on e.g. $1, $2
+# @arg global current_field_index This is the index for the current field we are parsing. If we were parsing $23, this would be 23
+# @arg local  parsed_value        This is a local variable that we use to organize what will be returned by this function
+#
+# @return This returns the parsed output of the field passed in
+function language_parser(current_word, current_field_index,    parsed_value) {
 #THIS SHOULD ALWAYS BE FIRST!!!! no need to parse anything if the word is useless
   if (match(current_word, useless_words)) {
 #This is done so that things like ends with will still work and get the expected regex instead of just getting nothing
@@ -91,6 +104,11 @@ function language_parser(current_word, current_field_index,     parsed_value) {
   return parsed_value
 }
 
+# This returns the character class equivalents for the values passed in
+#
+# @arg global text This is the text that is passed in and should be a character class
+#
+# @return This returns the character class, or if one isn't found, it returns what was passed in(this is going to change eventually. TODO remove the default at some point
 function get_character_class(text) {
   if (match(text, /^digits?$/)) {
     return  "\\d"
@@ -115,7 +133,14 @@ function get_character_class(text) {
   }
 }
 
-function capture_check(current_value,current_field_index,      tmp_return) {
+# This is how we check for capture groups
+#
+# @arg global current_value       This is the current field's value being passed in
+# @arg global current_field_index This is the index of the field that was passed in
+# @arg local  tmp_return          This holds the partial return for capture groups(either due to more than one parsable input between braces, or nested capture groups
+#
+# @return This returns the parsed capture group
+function capture_check(current_value,current_field_index,    tmp_return) {
 #let's save that opening brace
   tmp_return = current_value
 #keep grabbing the next input, starting at index + 1 so that I don't have to pass the "next" value to the language parser and instead pass in the "current"
@@ -131,7 +156,13 @@ function capture_check(current_value,current_field_index,      tmp_return) {
   return tmp_return language_parser($(j), (j))
 }
 
-function literal_check(current_field_index,      tmp_return) {
+# This handles literal strings that need parsing
+#
+# @arg global current_field_index This is the index of the current field being parsed
+# @arg local  tmp_return          This holds the partial return for literal groups(either due to more than one parsable input between quotes, or nested literal groups
+#
+# @return The exact words between quotes
+function literal_check(current_field_index,    tmp_return) {
 #This checks if we are doing a single value in the literal
   if (match($(current_field_index), /\"$/)) {
     tmp_return = tmp_return substr($(current_field_index), 2, length($(current_field_index)) - 2)
@@ -153,7 +184,14 @@ function literal_check(current_field_index,      tmp_return) {
   return tmp_return
 }
 
-function look_around_check(current_record,current_field_index,     tmp_return) {
+# This handles look ahead/behinds
+#
+# @arg global current_record      This is the current field being parsed
+# @arg global current_field_index This is the index of the field being parsed
+# @arg local  tmp_return          This holds the partial return for lookaround groups
+#
+# @return This returns the parsed look ahead/behind
+function look_around_check(current_record,current_field_index,    tmp_return) {
 #this is sort of dirty.... TODO maybe come up with a better way of handling it
   look_around_clause_two = current_record $(current_field_index + 1)
   look_around_clause_three = $(current_field_index - 1) current_record $(current_field_index + 1)
@@ -171,13 +209,25 @@ function look_around_check(current_record,current_field_index,     tmp_return) {
  return tmp_return
 }
 
-function not_check(current_field_index,     tmp_return) {
+# This handles parsing not
+#
+# @arg global current_field_index This is the current field's index
+# @arg local  tmp_return          This holds the partial return for lookaround groups
+#
+# @return This returns the notted value
+function not_check(current_field_index,    tmp_return) {
 #since we are notting we'll need a character class
   tmp_return = "[^" language_parser($(current_field_index + 1), (current_field_index + 1 )) "]"
   return tmp_return
 }
 
-function quantifier_check(current_field_index,     tmp_return) {
+# This checks if the next value is a quantifier or not, this is especially useful for making sure ends with is being parsed correctly
+#
+# @arg global current_field_index This is the field's current index
+# @arg local  tmp_return          This is either 0 if the next field isn't a quantifier, or 1 if it is
+#
+# @return This returns a 0 if the next field isn't a quantifier, or a 1 if it is
+function quantifier_check(current_field_index,    tmp_return) {
 #Here we'll use a bunch of duplicate code to check if a modifier comes next for use with things like "ends with"
   tmp_return = 0
   if (match($(current_field_index), useless_words)) {
