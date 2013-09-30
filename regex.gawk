@@ -1,6 +1,7 @@
 #! /bin/gawk -f
 BEGIN {
-  useless_words = "^(a|the|any|all|with)$";
+  useless_words         = "^(a|the|any|all|with)$";
+  character_class_words = "^(characters|digits|lowercase|optional(ly)?|spaces|uppercase)$";
 }
 /^[^#]/{
   print $0 " -> " language_parser_handler($0)
@@ -27,9 +28,10 @@ function language_parser_handler(current_line,    output) {
 # @arg global current_word        This is the current field we are working on e.g. $1, $2
 # @arg global current_field_index This is the index for the current field we are parsing. If we were parsing $23, this would be 23
 # @arg local  parsed_value        This is a local variable that we use to organize what will be returned by this function
+# @arg local  unformatted_return  This is for character classes so I can strip out nested brackets
 #
 # @return This returns the parsed output of the field passed in
-function language_parser(current_word, current_field_index,    parsed_value) {
+function language_parser(current_word, current_field_index,    parsed_value,unformatted_return) {
 #THIS SHOULD ALWAYS BE FIRST!!!! no need to parse anything if the word is useless
   if (match(current_word, useless_words)) {
 #This is done so that things like ends with will still work and get the expected regex instead of just getting nothing
@@ -90,13 +92,41 @@ function language_parser(current_word, current_field_index,    parsed_value) {
     parsed_value = "{" matched_digits[0] ",}"
     i = current_field_index + 2
   } else if (match(current_word, /^uppercase$/) && match($(current_field_index + 1), /^letters?$/)) {
-    parsed_value = get_character_class("uletter")
-    i = current_field_index + 1
+    parsed_value = "[" get_character_class("uletter")
+#start at 2 since we need to skip "letters"
+    for (k = 2; match($(current_field_index + k), character_class_words); k++) {
+      unformatted_return = language_parser($(current_field_index + k), current_field_index + k)
+      parsed_value = parsed_value substr(unformatted_return, 2, length(unformatted_return) - 2)
+      if (i > k) {
+        k = i
+      }
+    }
+    parsed_value = parsed_value "]"
   } else if (match(current_word, /^lowercase$/) && match($(current_field_index + 1), /^letters?$/)) {
-    parsed_value = get_character_class("lletter")
-    i = current_field_index + 1
+    parsed_value = "[" get_character_class("lletter")
+#start at 2 since we need to skip "letters"
+    for (k = 2; match($(current_field_index + k), character_class_words); k++) {
+      unformatted_return = language_parser($(current_field_index + k), current_field_index + k)
+      parsed_value = parsed_value substr(unformatted_return, 2, length(unformatted_return) - 2)
+      if (i > k) {
+        k = i
+      }
+    }
+    parsed_value = parsed_value "]"
+  } else if (match(current_word, character_class_words)) {
+    parsed_value = "[" get_character_class(current_word)
+    #we'll for through the next results until we hit a non-character class so that we know when/how to end the character class
+    for (k = 1; match($(current_field_index + k), character_class_words); k++) {
+      unformatted_return = language_parser($(current_field_index + k), current_field_index + k)
+      parsed_value = parsed_value substr(unformatted_return, 2, length(unformatted_return) - 2)
+      if (i > k) {
+        k = i
+      }
+    }
+    parsed_value = parsed_value "]"
   } else {
-    parsed_value = get_character_class(current_word)
+#TODO clean this up, this is gross, this is used for closing parens
+    parsed_value = current_word
   }
   if (i < current_field_index) {
     i = current_field_index
@@ -108,7 +138,7 @@ function language_parser(current_word, current_field_index,    parsed_value) {
 #
 # @arg global text This is the text that is passed in and should be a character class
 #
-# @return This returns the character class, or if one isn't found, it returns what was passed in(this is going to change eventually. TODO remove the default at some point
+# @return This returns the character class
 function get_character_class(text) {
   if (match(text, /^digits?$/)) {
     return  "\\d"
@@ -120,17 +150,14 @@ function get_character_class(text) {
     return  "\\s"
   }
   if (match(text, /^lletters?$/)) {
-    return  "[a-z]"
+    return  "a-z"
   }
   if (match(text, /^uletters?$/)) {
-    return  "[A-Z]"
+    return  "A-Z"
   }
   if (match(text, /^optional(ly)?$/)) {
     return "?"
-  } else {
-#this is super dirty, TODO clean it up
-    return text
-  }
+ }
 }
 
 # This is how we check for capture groups
